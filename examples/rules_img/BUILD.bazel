@@ -1,0 +1,33 @@
+load("@aspect_rules_buildx//buildx:defs.bzl", "buildx")
+load("@rules_img//img:convert.bzl", "image_index_from_oci_layout")
+load("@rules_img//img:load.bzl", "image_load")
+
+buildx(
+    name = "buildx_image",
+    dockerfile = ":Dockerfile",
+    platforms = [
+        "linux/amd64",
+        "linux/arm64",
+    ],
+    # Disable provenance so that we don't have attestation layers
+    provenance = "false",
+)
+
+image_index_from_oci_layout(
+    name = "image_index",
+    src = ":buildx_image",
+    layers = [
+        "application/vnd.oci.image.layer.v1.tar+gzip",
+        "application/vnd.oci.image.layer.v1.tar+gzip",
+    ],
+    manifests = [
+        "linux/amd64",
+        "linux/arm64",
+    ],
+)
+
+image_load(
+    name = "image_load",
+    image = ":image_index",
+    tag_list = ["bazel/rules_img_buildx_demo:latest"],
+)
